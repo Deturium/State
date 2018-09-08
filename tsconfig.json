@@ -1,0 +1,21 @@
+{
+  "compilerOptions": {
+    "module": "esnext",
+    "moduleResolution": "node",
+    "target": "es6",
+    "jsx": "preserve",
+    "declaration": true,
+    "sourceMap": false,
+    "baseUrl": ".",
+    "rootDir": "src",
+    "outDir": "lib",
+    "noImplicitAny": true,
+    "strictNullChecks": true,
+    "experimentalDecorators": true,
+    "allowSyntheticDefaultImports": true,
+  },
+  "exclude": [
+    "node_modules",
+    "example",
+  ]
+}
