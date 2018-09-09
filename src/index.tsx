@@ -3,115 +3,56 @@ import produce from 'immer'
 
 export * from 'immer'
 
-// utils
-function identity<T = any>(identity: T) {
-  return identity
-}
+export default function Store<S, R>(store: S, reduces: R) {
 
-function shallowEqual(objA: any, objB: any) {
-  if (objA === objB) {
-    return true
-  }
+  const { Provider, Consumer } = React.createContext<S>(store)
 
-  if (typeof objA !== "object" || typeof objB !== "object") {
-    return false
-  }
+  const subscribeList: Function[] = []
 
-  const keysA = Object.keys(objA)
 
-  for (let idx = 0; idx < keysA.length; idx++) {
-    let key = keysA[idx]
+  const Put = (action: keyof R, payload?: any) => {
+    const updator = reduces[action]
 
-    if (objA[key] !== objB[key]) {
-      return false
+    if (updator && typeof updator === 'function') {
+      const nextStore = produce<S>(store, draft => { updator(draft, payload) })
+
+      if (nextStore !== store) {
+        subscribeList.forEach(fn => fn())
+        store = nextStore
+      }
     }
   }
 
-  return true
-}
 
-
-export default function init<T, S>(initStore: T, reducers: S) {
-
-  let _store = initStore
-
-  function createSubscribe() {
-    const listenerList: any = []
-
-    return {
-      listen: (listener: Function) => {
-        listenerList.push(listener)
-      },
-
-      unListen: (listener: Function) => {
-        listenerList.splice(listenerList.indexOf(listener), 1)
-      },
-
-      update: (action: keyof S) => {
-        const updator = reducers[action]
-
-        if (updator && typeof updator === 'function') {
-
-          const nextStore = produce<T>(_store, draft => { updator(draft) })
-
-          if (_store !== nextStore) {
-
-            for (let i = 0; i < listenerList.length; i++) {
-              listenerList[i](nextStore, _store)
-            }
-
-            _store = nextStore
-          }
-
-        } else {
-
-          console.error(`reducers[${action}] is not a function`)
-
-        }
-      },
-    }
-  }
-
-  const { listen, unListen, update } = createSubscribe()
-
-
-  class Provider extends React.PureComponent<{
-    selector?: (store: T) => any
-  }> {
-
+  class _MyProvider extends React.PureComponent {
     componentDidMount() {
-      listen(this.reRender)
+      subscribeList.push(this.reRender)
     }
 
     componentWillUnmount() {
-      unListen(this.reRender)
+      subscribeList.splice(subscribeList.indexOf(this.reRender), 1)
     }
 
-    reRender = (nextStore: T, prevStore: T) => {
-      const selector = this.props.selector
-
-      if (!(selector && shallowEqual(selector(nextStore), selector(prevStore)))) {
-        // force update
-        this.forceUpdate()
-      }
+    reRender = () => {
+      this.forceUpdate()
     }
 
     render() {
-      const selector = this.props.selector || identity
-
-      return (this.props.children as (props: any) => React.ReactNode)(selector(_store))
+      return <Provider value={store}>{this.props.children}</Provider>
     }
   }
 
-  const Ctx: React.SFC<{
-    selector?: (store: T) => any
-  }> = (props) => <Provider selector={props.selector}>{props.children}</Provider>
+  const MyProvider: React.ComponentType = _MyProvider
+
 
   return {
-    Ctx,
+    Provider: MyProvider,
 
-    Put: update,
+    Consumer,
 
-    Store: () => _store
+    Put,
   }
+
 }
+
+

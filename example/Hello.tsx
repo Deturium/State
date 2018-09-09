@@ -1,5 +1,5 @@
 import React from 'react'
-import init, { Draft } from '../src'
+import Store, { Draft } from '../src'
 
 const initStore = {
   cnt: 1,
@@ -9,38 +9,36 @@ const initStore = {
 type S = typeof initStore
 
 const reducers = {
-  'ADD': (state: Draft<S>) => { state.cnt += 1 },
+  'ADD': (state: Draft<S>, payload: number) => { state.cnt += payload },
   'SUB': (state: Draft<S>) => { state.obj.count -= 1 },
 }
 
-const { Ctx, Put } = init(initStore, reducers)
+const { Provider, Consumer, Put } = Store(initStore, reducers)
 
 class Count extends React.Component<{
   name: string, value: number
 }> {
 
   componentDidUpdate() {
-    const { name, value } = this.props
-    console.log(`Update ${name} to ${value}`)
+    console.log(`Update ${this.props.name} to ${this.props.value}`)
   }
 
   render() {
-    const { name, value } = this.props
-    return <p>{`Hello, ${name} is ${value}`}</p>
+    return <p>{`Hello, ${this.props.name} is ${this.props.value}`}</p>
   }
 }
 
-const Hello: React.SFC = () => <>
-  <Ctx>
+const Hello: React.SFC = () => <Provider>
+  <Consumer>
     {(state: S) => <Count name="cnt" value={state.cnt}/>}
-  </Ctx>
+  </Consumer>
 
-  <Ctx selector={(state: S) => ({count: state.obj.count})}>
-    {(state: { count: number }) => <Count name="obj.count" value={state.count}/>}
-  </Ctx>
+  <Consumer>
+    {(state: S) => <Count name="obj.count" value={state.obj.count}/>}
+  </Consumer>
 
-  <button onClick={() => Put('ADD')}>+</button>
+  <button onClick={() => Put('ADD', 1)}>+</button>
   <button onClick={() => Put('SUB')}>-</button>
-</>
+</Provider>
 
 export default Hello
