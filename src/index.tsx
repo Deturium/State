@@ -14,11 +14,11 @@ export default function Store<S, R>(store: S, reduces: R) {
     const updator = reduces[action]
 
     if (updator && typeof updator === 'function') {
-      const nextStore = produce<S>(store, draft => { updator(draft, payload) })
+      const nextStore = produce(store, draft => { updator(draft, payload) })
 
       if (nextStore !== store) {
-        subscribeList.forEach(fn => fn())
         store = nextStore
+        subscribeList.forEach(fn => fn())
       }
     }
   }
