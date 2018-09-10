@@ -1,19 +1,29 @@
 import React from 'react'
-import Store, { Draft } from '../src'
+import { Container, Provider, Subscribe } from '../src'
 
-const initStore = {
-  cnt: 1,
-  obj: { count: 10 }
+const initState = {
+  count: 1,
+  obj: { cnt: 2 },
 }
 
-type S = typeof initStore
+type State = typeof initState
 
-const reducers = {
-  'ADD': (state: Draft<S>, payload: number) => { state.cnt += payload },
-  'SUB': (state: Draft<S>) => { state.obj.count -= 1 },
+class CounterContainer extends Container<State> {
+  state = initState
+
+  constructor() {
+    super()
+    this.put = super.put.bind(this)
+  }
+
+  ADD(state, payload) {
+    state.count += payload
+  }
+
+  SUB(state) {
+    state.obj.cnt -= 1
+  }
 }
-
-const { Provider, Consumer, Put } = Store(initStore, reducers)
 
 class Count extends React.Component<{
   name: string, value: number
@@ -29,16 +39,14 @@ class Count extends React.Component<{
 }
 
 const Hello: React.SFC = () => <Provider>
-  <Consumer>
-    {(state: S) => <Count name="cnt" value={state.cnt}/>}
-  </Consumer>
-
-  <Consumer>
-    {(state: S) => <Count name="obj.count" value={state.obj.count}/>}
-  </Consumer>
-
-  <button onClick={() => Put('ADD', 1)}>+</button>
-  <button onClick={() => Put('SUB')}>-</button>
+  <Subscribe to={[CounterContainer]}>
+    {({state, put}) => <>
+      <Count name="cnt" value={(state as State).count}/>
+      <Count name="obj.count" value={(state as State).obj.cnt}/>
+      <button onClick={() => put('ADD', 1)}>+</button>
+      <button onClick={() => put('SUB')}>-</button>
+    </>}
+  </Subscribe>
 </Provider>
 
 export default Hello

@@ -1,7 +1,7 @@
 {
   "name": "@cc98/state",
   "version": "0.2.0",
-  "description": "A light-weight state manager inspired by rectx.",
+  "description": "A light-weight state manager.",
   "main": "lib/index.js",
   "author": "Hydrogen <fanyangliang@gmail.com>",
   "license": "MIT",

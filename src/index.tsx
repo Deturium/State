@@ -1,58 +1,136 @@
 import React from 'react'
 import produce from 'immer'
 
-export * from 'immer'
+type Listener = () => void
+type ContainerConstructor = { new(): Container }
+type ContainerMap = Map<ContainerConstructor, Container>
 
-export default function Store<S, R>(store: S, reduces: R) {
+const CTX = React.createContext<ContainerMap>(new Map);
 
-  const { Provider, Consumer } = React.createContext<S>(store)
+class Container<State = {}> {
+  state: State
+  _listeners: Listener[] = []
 
-  const subscribeList: Function[] = []
+  put(action: string, payload?: any) {
 
+    const updator = (this as any)[action]
 
-  const Put = (action: keyof R, payload?: any) => {
-    const updator = reduces[action]
+    this.state = produce(this.state, draft => {
+      updator(draft, payload)
+    })
 
-    if (updator && typeof updator === 'function') {
-      const nextStore = produce(store, draft => { updator(draft, payload) })
-
-      if (nextStore !== store) {
-        store = nextStore
-        subscribeList.forEach(fn => fn())
-      }
-    }
+    this._listeners.forEach(listener => listener())
   }
 
-
-  class _MyProvider extends React.PureComponent {
-    componentDidMount() {
-      subscribeList.push(this.reRender)
-    }
-
-    componentWillUnmount() {
-      subscribeList.splice(subscribeList.indexOf(this.reRender), 1)
-    }
-
-    reRender = () => {
-      this.forceUpdate()
-    }
-
-    render() {
-      return <Provider value={store}>{this.props.children}</Provider>
-    }
+  __subscribe(fn: Listener) {
+    this._listeners.push(fn)
   }
 
-  const MyProvider: React.ComponentType = _MyProvider
-
-
-  return {
-    Provider: MyProvider,
-
-    Consumer,
-
-    Put,
+  __unsubscribe(fn: Listener) {
+    this._listeners = this._listeners.filter(f => f !== fn)
   }
 
 }
 
 
+class _Subscribe extends React.PureComponent<{
+  instances: Container[]
+  children: (...containers: Container[]) => React.ReactNode
+}> {
+
+  componentDidMount() {
+    this.props.instances.forEach(instance => instance.__subscribe(this.reRender))
+  }
+
+  componentWillUnmount() {
+    this.props.instances.forEach(instance => instance.__unsubscribe(this.reRender))
+  }
+
+  reRender = () => {
+    this.forceUpdate()
+  }
+
+  render() {
+    return this.props.children.apply(null, this.props.instances)
+  }
+}
+
+
+const createInstances = (map: ContainerMap, containers:  (Container | ContainerConstructor)[]) => {
+  if (map === null) {
+    throw new Error(
+      'You must wrap your <Subscribe> components with a <Provider>'
+    );
+  }
+
+  return containers.map(containerItem => {
+    let instance
+
+    if (
+      typeof containerItem === 'object' &&
+      containerItem instanceof Container
+    ) {
+      instance = containerItem
+
+    } else {
+      instance = map.get(containerItem)
+
+      if (!instance) {
+        instance = new containerItem()
+        map.set(containerItem, instance)
+      }
+    }
+
+    return instance
+  })
+}
+
+
+const Subscribe: React.SFC<{
+  to: (Container | ContainerConstructor)[]
+  children: (...containers: Container[]) => React.ReactNode
+}> = ({to, children}) => {
+  return (
+    <CTX.Consumer>
+      {map => <_Subscribe
+        instances={createInstances(map, to)}
+      >
+        {children}
+      </_Subscribe>}
+    </CTX.Consumer>
+  )
+}
+
+
+const Provider: React.SFC<{
+  inject?: Container[]
+}> = ({inject, children}) => {
+  return (
+    <CTX.Consumer>
+      {parentMap => {
+        const childMap = new Map(parentMap)
+
+        if (inject) {
+          inject.forEach(instance => {
+            childMap.set(instance.constructor as ContainerConstructor, instance)
+          })
+        }
+
+        return (
+          <CTX.Provider value={childMap}>
+            {children}
+          </CTX.Provider>
+        )
+      }}
+    </CTX.Consumer>
+  )
+}
+
+
+export {
+  Container,
+
+  Subscribe,
+
+  Provider,
+}
