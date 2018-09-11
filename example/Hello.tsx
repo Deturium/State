@@ -1,27 +1,27 @@
 import React from 'react'
 import { Container, Provider, Subscribe } from '../src'
 
-const initState = {
-  count: 1,
-  obj: { cnt: 2 },
+interface State {
+  count: number
+  obj: { cnt: number }
 }
 
-type State = typeof initState
-
 class CounterContainer extends Container<State> {
-  state = initState
-
-  constructor() {
-    super()
-    this.put = super.put.bind(this)
+  state = {
+    count: 1,
+    obj: { cnt: 2 },
   }
 
-  ADD(state, payload) {
-    state.count += payload
+  ADD(count: number) {
+    this.put(state => {
+      state.count += count
+    })
   }
 
-  SUB(state) {
-    state.obj.cnt -= 1
+  SUB() {
+    this.put(state => {
+      state.obj.cnt -= 1
+    })
   }
 }
 
@@ -39,14 +39,17 @@ class Count extends React.Component<{
 }
 
 const Hello: React.SFC = () => <Provider>
+
   <Subscribe to={[CounterContainer]}>
-    {({state, put}) => <>
-      <Count name="cnt" value={(state as State).count}/>
-      <Count name="obj.count" value={(state as State).obj.cnt}/>
-      <button onClick={() => put('ADD', 1)}>+</button>
-      <button onClick={() => put('SUB')}>-</button>
+    {(Counter: CounterContainer) => <>
+      <Count name="cnt" value={Counter.state.count}/>
+      <Count name="obj.count" value={Counter.state.obj.cnt}/>
+
+      <button onClick={() => Counter.ADD(1)}>+</button>
+      <button onClick={() => Counter.SUB()}>-</button>
     </>}
   </Subscribe>
+
 </Provider>
 
 export default Hello

@@ -1,49 +1,49 @@
 import React from 'react'
-import produce from 'immer'
+import produce, { Draft } from 'immer'
 
 type Listener = () => void
 type ContainerConstructor = { new(): Container }
 type ContainerMap = Map<ContainerConstructor, Container>
 
-const CTX = React.createContext<ContainerMap>(new Map);
+const MAP = React.createContext<ContainerMap>(new Map());
 
 class Container<State = {}> {
   state: State
   _listeners: Listener[] = []
 
-  put(action: string, payload?: any) {
-
-    const updator = (this as any)[action]
-
-    this.state = produce(this.state, draft => {
-      updator(draft, payload)
+  put(producer: (state: Draft<State>) => void) {
+    const nextState = produce(this.state, draft => {
+      producer(draft)
     })
 
-    this._listeners.forEach(listener => listener())
+    if (this.state !== nextState) {
+      this.state = nextState
+      this._listeners.forEach(listener => listener())
+    }
   }
 
-  __subscribe(fn: Listener) {
+  _subscribe(fn: Listener) {
     this._listeners.push(fn)
   }
 
-  __unsubscribe(fn: Listener) {
-    this._listeners = this._listeners.filter(f => f !== fn)
+  _unsubscribe(fn: Listener) {
+    const listeners = this._listeners
+    listeners.splice(listeners.indexOf(fn), 1)
   }
-
 }
 
 
-class _Subscribe extends React.PureComponent<{
+class Ctx extends React.PureComponent<{
   instances: Container[]
   children: (...containers: Container[]) => React.ReactNode
 }> {
 
   componentDidMount() {
-    this.props.instances.forEach(instance => instance.__subscribe(this.reRender))
+    this.props.instances.forEach(instance => instance._subscribe(this.reRender))
   }
 
   componentWillUnmount() {
-    this.props.instances.forEach(instance => instance.__unsubscribe(this.reRender))
+    this.props.instances.forEach(instance => instance._unsubscribe(this.reRender))
   }
 
   reRender = () => {
@@ -59,17 +59,14 @@ class _Subscribe extends React.PureComponent<{
 const createInstances = (map: ContainerMap, containers:  (Container | ContainerConstructor)[]) => {
   if (map === null) {
     throw new Error(
-      'You must wrap your <Subscribe> components with a <Provider>'
+      'You must wrap your <Subscribe> components with a <Prodiver>'
     );
   }
 
   return containers.map(containerItem => {
     let instance
 
-    if (
-      typeof containerItem === 'object' &&
-      containerItem instanceof Container
-    ) {
+    if (containerItem instanceof Container) {
       instance = containerItem
 
     } else {
@@ -91,13 +88,13 @@ const Subscribe: React.SFC<{
   children: (...containers: Container[]) => React.ReactNode
 }> = ({to, children}) => {
   return (
-    <CTX.Consumer>
-      {map => <_Subscribe
+    <MAP.Consumer>
+      {map => <Ctx
         instances={createInstances(map, to)}
       >
         {children}
-      </_Subscribe>}
-    </CTX.Consumer>
+      </Ctx>}
+    </MAP.Consumer>
   )
 }
 
@@ -106,9 +103,9 @@ const Provider: React.SFC<{
   inject?: Container[]
 }> = ({inject, children}) => {
   return (
-    <CTX.Consumer>
-      {parentMap => {
-        const childMap = new Map(parentMap)
+    <MAP.Consumer>
+      {map => {
+        const childMap = new Map(map)
 
         if (inject) {
           inject.forEach(instance => {
@@ -117,12 +114,12 @@ const Provider: React.SFC<{
         }
 
         return (
-          <CTX.Provider value={childMap}>
+          <MAP.Provider value={childMap}>
             {children}
-          </CTX.Provider>
+          </MAP.Provider>
         )
       }}
-    </CTX.Consumer>
+    </MAP.Consumer>
   )
 }
 
