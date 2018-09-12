@@ -5,7 +5,7 @@ type Listener = () => void
 type ContainerConstructor = { new(): Container }
 type ContainerMap = Map<ContainerConstructor, Container>
 
-const MAP = React.createContext<ContainerMap>(new Map());
+const MAP = React.createContext<ContainerMap>(new Map())
 
 class Container<State = {}> {
   state: State
@@ -60,7 +60,7 @@ const createInstances = (map: ContainerMap, containers:  (Container | ContainerC
   if (map === null) {
     throw new Error(
       'You must wrap your <Subscribe> components with a <Prodiver>'
-    );
+    )
   }
 
   return containers.map(containerItem => {
