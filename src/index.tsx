@@ -2,12 +2,12 @@ import React from 'react'
 import produce, { Draft } from 'immer'
 
 type Listener = () => void
-type ContainerConstructor = { new(): Container }
-type ContainerMap = Map<ContainerConstructor, Container>
+type ContainerType = { new (...args: any[]): Container }
+type ContainerMap = Map<ContainerType, Container>
 
-const MAP = React.createContext<ContainerMap>(new Map());
+const MAP = React.createContext<ContainerMap>(new Map())
 
-class Container<State = {}> {
+class Container<State = any> {
   state: State
   _listeners: Listener[] = []
 
@@ -56,11 +56,11 @@ class Ctx extends React.PureComponent<{
 }
 
 
-const createInstances = (map: ContainerMap, containers:  (Container | ContainerConstructor)[]) => {
+const createInstances = (map: ContainerMap, containers:  (Container | ContainerType)[]) => {
   if (map === null) {
     throw new Error(
       'You must wrap your <Subscribe> components with a <Prodiver>'
-    );
+    )
   }
 
   return containers.map(containerItem => {
@@ -84,8 +84,8 @@ const createInstances = (map: ContainerMap, containers:  (Container | ContainerC
 
 
 const Subscribe: React.SFC<{
-  to: (Container | ContainerConstructor)[]
-  children: (...containers: Container[]) => React.ReactNode
+  to: (Container | ContainerType)[]
+  children: (...instances: Container[]) => React.ReactNode
 }> = ({to, children}) => {
   return (
     <MAP.Consumer>
@@ -101,6 +101,7 @@ const Subscribe: React.SFC<{
 
 const Provider: React.SFC<{
   inject?: Container[]
+  children: React.ReactNode
 }> = ({inject, children}) => {
   return (
     <MAP.Consumer>
@@ -109,7 +110,7 @@ const Provider: React.SFC<{
 
         if (inject) {
           inject.forEach(instance => {
-            childMap.set(instance.constructor as ContainerConstructor, instance)
+            childMap.set(instance.constructor as ContainerType, instance)
           })
         }
 

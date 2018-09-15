@@ -1,9 +1,12 @@
 {
   "name": "@cc98/state",
-  "version": "0.2.0",
+  "version": "1.0.0",
   "description": "A light-weight state manager.",
   "main": "lib/index.js",
   "author": "Hydrogen <fanyangliang@gmail.com>",
+  "files": [
+    "lib"
+  ],
   "license": "MIT",
   "scripts": {
     "dev": "webpack-dev-server --progress --hot --inline",
@@ -32,5 +35,13 @@
     "webpack": "^4.17.2",
     "webpack-cli": "^3.1.0",
     "webpack-dev-server": "^3.1.8"
-  }
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Deturium/State.git"
+  },
+  "bugs": {
+    "url": "https://github.com/Deturium/State/issues"
+  },
+  "homepage": "https://github.com/Deturium/State#readme"
 }
