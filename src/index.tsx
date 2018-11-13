@@ -1,11 +1,9 @@
-/* tslint:disable */
-import { useState, useEffect, useRef } from 'react'
-import { debug } from 'util';
+import { useState, useEffect } from 'react'
 
 declare global {
   interface Window {
     __$$GLOBAL_STATE_: {
-      [key: string]: Object
+      [key: string]: object
     }
   }
 }
@@ -15,7 +13,7 @@ window.__$$GLOBAL_STATE_ = {}
 
 type Listener = () => void
 
-export class Container<State extends Object = {}> {
+export class Container<State extends object = {}> {
   namespace: string
 
   state: State
@@ -34,13 +32,25 @@ export class Container<State extends Object = {}> {
     listeners.splice(listeners.indexOf(fn), 1)
   }
 
-  updator<T>(updateFunc: () => T, shouldUpdate = true) {
+  /**
+   * Update the state
+   * @param updateFunc 更新状态的函数
+   * @param shouldUpdate 是否广播状态变更
+   */
+  update<T>(updateFunc: () => T, shouldUpdate = true) {
     const retValue = updateFunc()
     if (shouldUpdate) {
       this._listeners.forEach(listener => listener())
     }
 
     return retValue
+  }
+
+  /**
+   * Return a func which can update the state
+   */
+  updator<T>(updateFunc: () => T, shouldUpdate = true) {
+    return () => this.update(updateFunc, shouldUpdate)
   }
 }
 
@@ -53,8 +63,8 @@ export function useGlobalContainer<T extends Container>(containerInstance: T) {
 
   useEffect(() => {
     const listener = () => forceUpdate(null)
-
     containerInstance._subscribe(listener)
+
     return () => containerInstance._unsubscribe(listener)
   }, [])
 

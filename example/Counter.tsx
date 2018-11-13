@@ -41,8 +41,8 @@ function Counter1() {
   return (
     <>
       <p>{counter.state.count}</p>
-      <button onClick={() => { counter.updator(counter.ADD) }}>+1</button>
-      <button onClick={() => { counter.updator(counter.SUB) }}>+2</button>
+      <button onClick={ counter.updator(counter.ADD) }>+1</button>
+      <button onClick={ counter.updator(counter.SUB) }>+2</button>
     </>
   )
 }
@@ -57,17 +57,21 @@ function Counter2() {
   return (
     <>
       <p>{counter.state.count}</p>
-      <button onClick={() => { counter.updator(counter.ADD_N(2)) }}>+2</button>
-      <button onClick={() => { counter.updator(counter.ADD_N(10), false) }}>+10 without notify</button>
+      <button onClick={ counter.updator(counter.ADD_N(2)) }>+2</button>
+      <button onClick={ counter.updator(counter.ADD_N(10), false) }>+10 without notify</button>
 
       {/* dark magic, think twice before hack */}
-      <button onClick={() => { counter.updator(sub2.bind(counter)) }}>-2</button>
+      <button onClick={ counter.updator(sub2.bind(counter)) }>-2</button>
     </>
   )
 }
 
 
 export default function() {
+
+  // just update counter
+  counterInstance.update(counterInstance.ADD_N(5))
+
   return (
     <>
       <h2>Counter 1</h2>
