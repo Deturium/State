@@ -1,3 +1,3 @@
 # @cc98/state
 
-A light-weight state manager inspired by rectx and unstated.
+A light-weight global state manager use Hooks API.

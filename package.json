@@ -1,6 +1,6 @@
 {
   "name": "@cc98/state",
-  "version": "1.0.0",
+  "version": "2.0.0-alpha",
   "description": "A light-weight state manager.",
   "main": "lib/index.js",
   "author": "Hydrogen <fanyangliang@gmail.com>",
@@ -12,29 +12,26 @@
     "dev": "webpack-dev-server --progress --hot --inline",
     "build": "rm -rf lib && tsc --emitDeclarationOnly && babel src --out-dir lib --extensions \".ts,.tsx\""
   },
-  "dependencies": {
-    "immer": "^1.6.0"
-  },
   "peerDependencies": {
-    "react": ">=16.3.0"
+    "react": ">=16.7.0-alpha.0"
   },
   "devDependencies": {
-    "@babel/cli": "^7.0.0",
-    "@babel/core": "^7.0.0",
-    "@babel/plugin-proposal-class-properties": "^7.0.0",
-    "@babel/preset-env": "^7.0.0",
+    "@babel/cli": "^7.1.5",
+    "@babel/core": "^7.1.5",
+    "@babel/plugin-proposal-class-properties": "^7.1.0",
+    "@babel/preset-env": "^7.1.5",
     "@babel/preset-react": "^7.0.0",
-    "@babel/preset-typescript": "^7.0.0",
-    "@types/react": "^16.4.13",
-    "@types/react-dom": "^16.0.7",
-    "babel-loader": "^8.0.2",
-    "html-webpack-plugin": "^4.0.0-alpha.2",
-    "react": "^16.5.0",
-    "react-dom": "^16.4.2",
-    "typescript": "^3.0.3",
-    "webpack": "^4.17.2",
-    "webpack-cli": "^3.1.0",
-    "webpack-dev-server": "^3.1.8"
+    "@babel/preset-typescript": "^7.1.0",
+    "@types/react": "16.7.0",
+    "@types/react-dom": "^16.0.9",
+    "babel-loader": "^8.0.4",
+    "html-webpack-plugin": "^4.0.0-beta.4",
+    "react": "^16.7.0-alpha.0",
+    "react-dom": "^16.7.0-alpha.0",
+    "typescript": "^3.1.6",
+    "webpack": "^4.25.1",
+    "webpack-cli": "^3.1.2",
+    "webpack-dev-server": "^3.1.10"
   },
   "repository": {
     "type": "git",
