@@ -12,6 +12,7 @@ declare global {
 window.__$$GLOBAL_STATE_ = {}
 
 type Listener = () => void
+type UpdateFunc = () => void | boolean | Promise<void> | Promise<boolean>
 
 export class Container<State extends object = {}> {
   namespace: string
@@ -37,20 +38,23 @@ export class Container<State extends object = {}> {
    * @param updateFunc 更新状态的函数
    * @param shouldUpdate 是否广播状态变更
    */
-  update<T>(updateFunc: () => T, shouldUpdate = true) {
-    const retValue = updateFunc()
-    if (shouldUpdate) {
-      this._listeners.forEach(listener => listener())
-    }
-
-    return retValue
+  update = (updateFunc: UpdateFunc) => {
+    Promise
+      .resolve<void | boolean>(
+        updateFunc()
+      )
+      .then((shouldUpdate) => {
+        if (shouldUpdate === false)
+          return
+        this._listeners.forEach(listener => listener())
+      })
   }
 
   /**
    * Return a func which can update the state
    */
-  updator<T>(updateFunc: () => T, shouldUpdate = true) {
-    return () => this.update(updateFunc, shouldUpdate)
+  updator = (updateFunc: UpdateFunc) => {
+    return () => this.update(updateFunc)
   }
 }
 
