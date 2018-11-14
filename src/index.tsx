@@ -12,12 +12,11 @@ declare global {
 window.__$$GLOBAL_STATE_ = {}
 
 type Listener = () => void
-type UpdateFunc = () => void | boolean | Promise<void> | Promise<boolean>
 
 export class Container<State extends object = {}> {
   namespace: string
 
-  state: State
+  state: Readonly<State>
   _listeners: Listener[] = []
 
   _attachToGlobal() {
@@ -33,27 +32,41 @@ export class Container<State extends object = {}> {
     listeners.splice(listeners.indexOf(fn), 1)
   }
 
-  /**
-   * Update the state
-   * @param updateFunc 更新状态的函数
-   */
-  update = (updateFunc: UpdateFunc) => {
-    return Promise
-      .resolve<void | boolean>(
-        updateFunc()
-      )
-      .then((shouldBroadcast) => {
-        if (!(shouldBroadcast === false))
-          return
-        this._listeners.forEach(listener => listener())
-      })
-  }
+  setState<K extends keyof State>(
+    state: ((prevState: Readonly<State>) => Pick<State, K> | State | null) | (Pick<State, K> | State | null),
+    callback?: () => void
+  ) {
+    return Promise.resolve().then(() => {
+      let nextState: Pick<State, K> | State | null
 
-  /**
-   * Return a func which can update the state
-   */
-  updator = (updateFunc: UpdateFunc) => {
-    return () => this.update(updateFunc)
+      if (typeof state === 'function') {
+        nextState = (state as Function)(this.state)
+      } else {
+        nextState = state
+      }
+
+      if (nextState == null) {
+        if (callback) callback()
+        return
+      }
+
+      this.state = Object.assign(
+        {},
+        this.state,
+        nextState
+      )
+
+      const promises = this._listeners
+        .map(listener => listener())
+
+      return Promise
+        .all(promises)
+        .then(() => {
+          if (callback) {
+            return callback()
+          }
+        })
+    })
   }
 }
 
