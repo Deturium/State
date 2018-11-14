@@ -36,15 +36,14 @@ export class Container<State extends object = {}> {
   /**
    * Update the state
    * @param updateFunc 更新状态的函数
-   * @param shouldUpdate 是否广播状态变更
    */
   update = (updateFunc: UpdateFunc) => {
-    Promise
+    return Promise
       .resolve<void | boolean>(
         updateFunc()
       )
-      .then((shouldUpdate) => {
-        if (shouldUpdate === false)
+      .then((shouldBroadcast) => {
+        if (!(shouldBroadcast === false))
           return
         this._listeners.forEach(listener => listener())
       })
