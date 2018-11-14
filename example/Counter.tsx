@@ -40,9 +40,8 @@ class CounterContainer extends Container<State> {
   }
 }
 
-
+// must create Container instance before use
 const counterInstance = new CounterContainer()
-counterInstance._attachToGlobal()
 
 
 function Counter1() {
@@ -59,6 +58,7 @@ function Counter1() {
 
 function Counter2() {
   const counter = useGlobalContainer(counterInstance)
+  // use destructuring assignment syntax to simplify
   const { state, ADD, SET_N } = counter
 
   return (
@@ -72,7 +72,7 @@ function Counter2() {
 
 
 export default function() {
-  // let's update counter
+  // let's init the counter
   counterInstance.SET_N(5)
 
   return (

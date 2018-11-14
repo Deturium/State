@@ -1,16 +1,5 @@
 import { useState, useEffect } from 'react'
 
-declare global {
-  interface Window {
-    __$$GLOBAL_STATE_: {
-      [key: string]: object
-    }
-  }
-}
-
-// Prepare for debug tools
-window.__$$GLOBAL_STATE_ = {}
-
 type Listener = () => void
 
 export class Container<State extends object = {}> {
@@ -18,10 +7,6 @@ export class Container<State extends object = {}> {
 
   state: Readonly<State>
   _listeners: Listener[] = []
-
-  _attachToGlobal() {
-    window.__$$GLOBAL_STATE_[this.namespace] = this.state
-  }
 
   _subscribe(fn: Listener) {
     this._listeners.push(fn)
@@ -32,19 +17,26 @@ export class Container<State extends object = {}> {
     listeners.splice(listeners.indexOf(fn), 1)
   }
 
+  /**
+   * just like setState in react
+   * @param state_or_updater
+   * @param callback
+   */
   setState<K extends keyof State>(
-    state: ((prevState: Readonly<State>) => Pick<State, K> | State | null) | (Pick<State, K> | State | null),
+    updater: ((prevState: Readonly<State>) => Pick<State, K> | State | null) | (Pick<State, K> | State | null),
     callback?: () => void
-  ) {
+  ): Promise<void> {
     return Promise.resolve().then(() => {
       let nextState: Pick<State, K> | State | null
 
-      if (typeof state === 'function') {
-        nextState = (state as Function)(this.state)
+      if (typeof updater === 'function') {
+        nextState = (updater as Function)(this.state)
       } else {
-        nextState = state
+        nextState = updater
       }
 
+      // (v == null) equal to (v === null || v === undefined)
+      // this will prevent broadcast
       if (nextState == null) {
         if (callback) callback()
         return
@@ -86,3 +78,6 @@ export function useGlobalContainer<T extends Container>(containerInstance: T) {
 
   return containerInstance
 }
+
+
+
